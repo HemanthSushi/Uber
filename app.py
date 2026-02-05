@@ -5,34 +5,38 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import os
 
-# --- PAGE CONFIG ---
-st.set_page_config(page_title="Uber Analysis Dashboard", layout="wide")
-st.title("🚗 Uber NYC Data Analysis")
+# --- PAGE CONFIGURATION ---
+st.set_page_config(page_title="Uber NYC Dashboard", layout="wide")
+st.title("🚗 Uber NYC Pickup Analysis")
 
-# --- DATA LOADING ---
-# Ensure this matches your filename in Codespaces
-DATA_FILE = 'uber-raw-data.csv'
+# --- FILE PATH CONFIGURATION ---
+# Updated to look inside the 'data' folder
+DATA_FILE = 'data/uber-raw-data.csv'
 
+# Safety check to prevent app crashes
 if not os.path.exists(DATA_FILE):
-    st.error(f"Error: {DATA_FILE} not found. Please ensure the file is in the main folder.")
+    st.error(f"File not found at: {DATA_FILE}")
+    st.info("Please make sure the 'data' folder exists and contains 'uber-raw-data.csv'.")
     st.stop()
 
 @st.cache_data
 def load_data():
     return analysis.load_uber_data(DATA_FILE)
 
+# Load the dataset
 df = load_data()
 
-# --- SIDEBAR ---
-st.sidebar.header("Filter Map")
+# --- SIDEBAR FILTERS ---
+st.sidebar.header("Map Filters")
 hour_to_filter = st.sidebar.slider('Select Hour of Day', 0, 23, 17)
 
-# --- VISUAL 1: MAP ---
-st.subheader(f"Pickup Locations at {hour_to_filter}:00")
+# --- VISUALS ---
+# 1. Pickup Map
+st.subheader(f"Pickup Hotspots at {hour_to_filter}:00")
 map_filtered = df[df['hour'] == hour_to_filter]
 st.map(map_filtered)
 
-# --- VISUAL 2 & 3: GRAPHS ---
+# 2. Charts Row
 col1, col2 = st.columns(2)
 
 with col1:
@@ -41,16 +45,17 @@ with col1:
     st.bar_chart(hour_counts)
 
 with col2:
-    st.subheader("Demand Heatmap")
+    st.subheader("Weekly Demand Heatmap")
     heatmap_data = analysis.get_heatmap_data(df)
     
-    fig, ax = plt.subplots()
+    # Plotting the heatmap
+    fig, ax = plt.subplots(figsize=(10, 6))
     sns.heatmap(heatmap_data, cmap="YlGnBu", ax=ax)
     ax.set_yticklabels(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
     plt.ylabel("Day of Week")
     plt.xlabel("Hour of Day")
     st.pyplot(fig)
 
-# --- RAW DATA VIEW ---
-if st.checkbox("Show Raw Data"):
-    st.write(df.head(100))
+# 3. Data Inspection
+if st.checkbox("Show Sample Raw Data"):
+    st.write(df.head(50))
